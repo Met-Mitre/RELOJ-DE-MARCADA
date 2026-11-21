@@ -61,8 +61,10 @@
     <label for="id">DNI / Legajo</label>
     <input id="id" inputmode="numeric" autocomplete="username" placeholder="Ej: 30111222">
 
+    <div id="pinBox">
     <label for="pin">PIN</label>
     <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••">
+    </div>
 
     <div class="rec"><input type="checkbox" id="recordar" checked><span>Recordar mis datos en este celular</span></div>
 
@@ -91,7 +93,9 @@
     }).then(function (r) { return r.json(); });
   }
 
+  var USAR_PIN = false; // true = pide PIN además del DNI (activarlo también en Code.gs)
   var $ = function (id) { return document.getElementById(id); };
+  if (!USAR_PIN) $('pinBox').style.display = 'none';
 
   // ---- Cámara (selfie al marcar) ----
   var FOTO_OBLIGATORIA = false; // true = no deja marcar sin foto
@@ -146,7 +150,7 @@
     tEstado = setTimeout(function () {
       var id = $('id').value.trim(), pin = $('pin').value.trim();
       $('bEntrada').classList.remove('sug'); $('bSalida').classList.remove('sug');
-      if (!id || !pin) { $('hola').textContent = ''; return; }
+      if (!id || (USAR_PIN && !pin)) { $('hola').textContent = ''; return; }
       api({ accion: 'estado', id: id, pin: pin }).then(function (r) {
         if (!r || !r.ok) { $('hola').textContent = ''; return; }
         $('hola').innerHTML = 'Hola, <b>' + esc(r.nombre) + '</b>' +
@@ -169,7 +173,8 @@
   // ---- Marcar ----
   function marcar(tipo) {
     var id = $('id').value.trim(), pin = $('pin').value.trim();
-    if (!id || !pin) return mostrar('err', 'Ingresá tu DNI/legajo y tu PIN.');
+    if (!id) return mostrar('err', 'Ingresá tu DNI/legajo.');
+    if (USAR_PIN && !pin) return mostrar('err', 'Ingresá tu PIN.');
     if (!navigator.geolocation) return mostrar('err', 'Este navegador no permite obtener la ubicación.');
 
     bloquear(true);
